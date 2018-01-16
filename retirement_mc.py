@@ -24,13 +24,18 @@ from itertools import cycle
 lines = ["-","--","-.",":"]
 linecycler = cycle(lines)
 
-from cdc_life_tables import life_table
+import sys
+sys.path.insert(0, "./shiller")
+sys.path.insert(0, "./cdc_life_tables")
+
+import cdc_life_tables
 import shiller
 
 # Historical financial data
-inflation = shiller.inflation.iloc[1:-1]
-stock_returns = shiller.stock_returns.iloc[1:-1]
-interest_rates = shiller.interest_rates.iloc[1:-1]
+
+inflation = shiller.inflation()
+stock_returns = shiller.stock_returns()
+interest_rates = shiller.interest_rates()
 
 rand = np.random.random_sample
 
@@ -77,7 +82,7 @@ def run_histories(starting_assets,
     """
 
     # Life table
-    table = life_table(state_abbrev, demographic_group)
+    table = cdc_life_tables.life_table(state_abbrev, demographic_group)
 
     mc_histories = []
 
@@ -91,7 +96,6 @@ def run_histories(starting_assets,
 
         # Loop over years
         while current_assets > 0:
-
             # Death this year.
             if age >= 110 or rand() <= table[int(age)]:
                 # Die at random point in year
@@ -106,7 +110,7 @@ def run_histories(starting_assets,
             i = int(i)
 
             # Adjust expenses for inflation.
-            expenses_per_year *= 1.0+inflation.iloc[i]
+            expenses_per_year *= 1.0 + inflation.iloc[i]
 
             # Adding stock investment increase
             stock_gains = stock_returns.iloc[i] * (current_assets*stock_fraction)
@@ -146,7 +150,7 @@ def run_histories(starting_assets,
             final_assets.append(y[-1])
             final_ages.append(x[-1])
 
-        plt.plot(final_ages, final_assets, color='red', ls=':',
+        plt.plot(final_ages, final_assets, color='red', ls='',
                  marker='.', markersize=1.5)
 
         plt.xlabel('Age')
@@ -183,7 +187,7 @@ def run_histories(starting_assets,
                                   run_out_of_money_hist.std()/np.sqrt(n_mc))
 
     if verbose:
-        print ' Chance of running out of money is {:%}'.format(run_out_of_money)
+        print(' Chance of running out of money is {:%}'.format(run_out_of_money))
 
     return run_out_of_money
 
@@ -399,7 +403,7 @@ def sensitivity_plots(
     fig.tight_layout()
 
     if verbose:
-        print ' You should save ${:.2f} million.'.format(base_save)
+        print(' You should save ${:.2f} million.'.format(base_save))
 
     #fig.savefig('figs/{}.pdf'.format('sensitivity-plots'))
 
